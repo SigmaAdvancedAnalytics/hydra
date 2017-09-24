@@ -15,6 +15,25 @@ conn = psycopg2.connect(conn_string)
 cursor = conn.cursor()
 print("Connected!\n")
 
+def tableau_server_import(tableau_auth, tab_server):
+    try:
+        #Connect to Tableau server
+        with tab_server.auth.sign_in(tableau_auth):
+            for wb in TSC.Pager(tab_server.workbooks):
+                tab_server.workbooks.populate_connections(wb)
+                tab_server.workbooks.populate_views(wb)
+                workbooks_list.append([wb.id,wb.name,wb.content_url,wb.project_name,wb.created_at.date(),wb.updated_at.date(),wb.connections])
+                for con in wb.connections:
+                    connections_list.append([con.id,con.datasource_id,con.datasource_name,con.connection_type,con.username,con.password,con.embed_password,con.server_address,con.server_port])
+                for view in wb.views:
+                    views_list.append([view.workbook_id,view.id,view.name,view.owner_id,view.total_views])
+        return workbooks_list, connections_list, views_list
+    except:
+        return sys.exc_info()        
+
+workbooks, connections, views = tableau_server_import(tableau_auth, tab_server)
+
+
 #KennaG123
 #SQL alchemy connection example
 """
@@ -29,6 +48,14 @@ engine = sqlalchemy.create_engine('mssql://'+SERVER_NAME+'/'+DATABASE_NAME+'?tru
 
 # DEPRECATED TSC API CONNECTOR - TO BE USED FOR FILE UPLOADS AT LATER DATE
 """
+
+import tableauserverclient as TSC
+
+#Tableau Server authentication TODO: convert to .ENV file
+tableau_auth = TSC.TableauAuth('jmayer', 'jmayer')
+tab_server = TSC.Server('https://reports2.agconnect.org/')
+#Additional tab server information will be available here: https://onlinehelp.tableau.com/current/server/en-us/data_dictionary.html
+
 #Tableau Server authentication TODO: convert to .ENV file
 tableau_auth = TSC.TableauAuth('jmayer', 'jmayer')
 tab_server = TSC.Server('https://reports2.agconnect.org/')

@@ -7,3 +7,9 @@ def exec_procedure(session, proc_name, params):
     """.format(proc_name=proc_name, params=sql_params)
 
     return session.execute(sql_string).fetchall()
+
+#SQL Server authentication
+sql_server = 'CA3BSF2-CASQL01'
+database = 'AgProCanada_TableauDEV'
+user = getenv("PYMSSQL_USERNAME") #Set this in Powershell using >>> $env:PYMSSQL_USERNAME = "THEKENNAGROUP\Username"
+password = getenv("PYMSSQL_PASSWORD") #Set this in Powershell using >>> $env:PYMSSQL_PASSWORD = "Super_SecretPaword"
