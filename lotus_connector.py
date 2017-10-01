@@ -30,6 +30,11 @@ def list_documents(view):
         doc = view.GetNextDocument(doc)
 
 
+def get_view(db, view_name):
+    "list views in database"
+    return db.GetView(view_name)
+
+
 def describe_view(view):
     "describe view and first document"
     doc = view.GetFirstDocument()
@@ -38,7 +43,7 @@ def describe_view(view):
 
 
 def describe_document(doc):
-    "describe document"
+    "print document information"
     items = []
     for key in doc.Items:
         item = doc.GetFirstItem(key.Name)
@@ -50,22 +55,57 @@ def describe_document(doc):
         print(i)
 
 
+def lndoc2obj(doc):
+    """
+    Convert NotesDocument to a Python dictionary-like structure.
+    Structure:
+        {
+            '<first_item_name>': {
+                'values': ('<first value>', '<second value>),
+                'type': 'TEXT',
+                'last_modified': datetime.datetime(2015, 2, 10, 12, 45, 34)
+            },
+            '<second_item_name>': {
+                'values': (datetime.datetime(2015, 2, 1, 0, 0, 0),),
+                'type': 'DATETIMES',
+                'last_modified': datetime.datetime(2015, 2, 2, 10, 13, 43)
+            }
+        }
+    """
+    vals = []
+    if doc.Items:
+        for k in doc.Items:
+            itm = doc.GetFirstItem(k.Name)
+            if itm.Type in (ItemType.DATETIMES, ItemType.RFC822Text):
+                val = tuple([_dt(i) for i in itm.Values])
+            else:
+                val = doc.GetItemValue(k.Name)
+
+            r = (k.Name, {
+                'values': val,
+                'type': ITEM_TYPES[itm.Type],
+                'last_modified': _dt(itm.LastModified),
+            })
+            vals.append(r)
+    return dict(vals)
+
+
 # function test
 # Lotus credentials
 LN_KEY = "OldUser34#$" #Todo: convert these into a .env file
-LN_SERVER_NAME = 'Toronto16/BASFPro'
-LN_DB_NAME = r"BASF\agprocan\agcreports.nsf"
-LN_DB_VIEW = 'Tableau Report Config'
+LN_SERVER = 'Toronto16/BASFPro'
+LN_DB = r"BASF\agprocan\agcreports.nsf"
+LN_VIEW = 'Tableau Report Config'
 
 # Functions
 "TBD Scanner"
 "Lotus connector import"
-db = connect(LN_KEY, LN_SERVER_NAME, LN_DB_NAME)
+db = connect(LN_KEY, LN_SERVER, LN_DB)
+view = get_view(db,LN_VIEW)
 
-for view in list_views(db):
-	print(view.Name)
-	for doc in list_documents(view):
-		describe_document(doc)
+describe_view(view)
+for doc in list_documents(view):
+    print(doc)
 	
 
 
