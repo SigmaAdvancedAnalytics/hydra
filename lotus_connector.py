@@ -1,22 +1,20 @@
-#from lnlib import (get_session, list_views, list_documents,
-#    describe_document, search, fetch_documents_since)
 import pywintypes
 from win32com.client import Dispatch, makepy
+
+# Update win32com to use the IBM Notes classes
 makepy.GenerateFromTypeLibSpec('Lotus Domino Objects')
 makepy.GenerateFromTypeLibSpec('IBM Notes Automation Classes')
 
-SERVER_NAME = 'Toronto16/BASFPro'
-DB_NAME = r"BASF\agprocan\agcreports.nsf"
-DB_VIEW = 'Tableau Report Config'
 
-
-def get_session(ln_key, workdir=None):
+def connect(ln_key, server_name, db_name, workdir=None):
     "helper function for creating a new NotesSession"
     if workdir:
         os.chdir(workdir)
     session = Dispatch('Lotus.NotesSession')
     session.Initialize(ln_key)
-    return session
+    db = session.GetDatabase(server_name, db_name)
+    return db
+
 
 def list_views(db):
     "list views in database"
@@ -30,6 +28,7 @@ def list_documents(view):
     while doc:
         yield doc
         doc = view.GetNextDocument(doc)
+
 
 def describe_view(view):
     "describe view and first document"
@@ -50,54 +49,18 @@ def describe_document(doc):
     for i in items:
         print(i)
 
-def _dt(obj):
-    "convert pywintypes.Time to datetime"
-    if not type(obj) == type(pywintypes.Time(1)):
-        return obj
-    else:
-        return windt2datetime(obj)
-# Init variables
-unique = set()
-dupe = []
-reports = {}
-curdict = {}
-reportname = ''
-workbooks_list = []
-connections_list = []
-views_list = []
 
-# Read the database file into a dictionary of dictionaries, each nested dictionary representing an individual report
+# function test
+# Lotus credentials
+LN_KEY = "OldUser34#$" #Todo: convert these into a .env file
+LN_SERVER_NAME = 'Toronto16/BASFPro'
+LN_DB_NAME = r"BASF\agprocan\agcreports.nsf"
+LN_DB_VIEW = 'Tableau Report Config'
 
-def lotus_export_read(input_file):
-    try:    
-        #init variables
-        unique = set()
-        dupe = []
-        reports = {}
-        curdict = {}
-        reportname = ''
-        #Read the lotus reports into a dictionary of dictionaries
-        f = open(input_file, 'r', encoding='utf-8')
-        for line in f:
-            if ':' in line:     #':' denotes a field and should be added to the current dictionary
-                items = line.strip('$').split(':', 1)
-                curdict[items[0].strip()] = items[1].strip()
-            elif line == '~\n': #'~' denotes end of current report
-                reportname = curdict['DocCode']
-                if reportname not in unique:  #'DocCode' represents unique reports - we use these as keys
-                    unique.add(reportname)
-                    reports[reportname] = curdict
-                    curdict = {}
-                else:
-                    dupe.append(reportname)                             
-        f.close()
-        return reports,dupe
-    except:
-        return sys.exc_info()
-
-
-session = get_session(ln_key="OldUser34#$") #,workdir=r"C:\Users\jbarber\AppData\Local\IBM\Notes"
-db = session.GetDatabase(SERVER_NAME, DB_NAME)
+# Functions
+"TBD Scanner"
+"Lotus connector import"
+db = connect(LN_KEY, LN_SERVER_NAME, LN_DB_NAME)
 
 for view in list_views(db):
 	print(view.Name)
@@ -105,8 +68,6 @@ for view in list_views(db):
 		describe_document(doc)
 	
 
-reports,dupes = lotus_export_read(input_file)
-print('There were {0} reports imported; {1} of which were duplicates'.format(len(reports),len(dupes)))
 
 
 

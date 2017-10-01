@@ -17,6 +17,7 @@ SELECT
 FROM sys.tables where name like '%salesdashboard%' or name like '%transa%'
 order by modify_date desc
 
+
 /* Enumerate all views on current DB */
 IF OBJECT_ID('TEMPDB..#views') IS NOT NULL DROP TABLE #views
 SELECT  
