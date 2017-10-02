@@ -1,3 +1,5 @@
+import datetime
+import pprint
 import pywintypes
 from win32com.client import Dispatch, makepy
 
@@ -16,14 +18,62 @@ def connect(ln_key, server_name, db_name, workdir=None):
     return db
 
 
+def describe_database(db):
+    "Print views with dist doc as example" #db.AllDocuments
+    for view in db.Views:
+        doc = view.GetFirstDocument()
+        print('\nView:', view.Name,'\nFirst document:')
+        if doc is not None:
+            describe_document(doc)
+
+
+def describe_view(view):
+    "print view information"
+    doc = view.GetFirstDocument()
+    print('\nView:', view.Name,'\nDocuments:')
+    while doc:
+        print('\tUID: ',doc.UniversalID,' NotesURL:',doc.NotesURL)
+        doc = view.GetNextDocument(doc)
+
+
+def convert_datetime(obj):
+    "convert pywintypes.Time to datetime"
+    if type(obj) == pywintypes.TimeType:
+        datetime_obj = datetime.datetime(
+        year=obj.year,
+        month=obj.month,
+        day=obj.day,
+        hour=obj.hour,
+        minute=obj.minute,
+        second=obj.second
+    )
+        return str(datetime_obj)
+    else:
+        return obj
+        
+
+def describe_document(doc):
+    "print document information"
+    items = []
+    for key in doc.Items:
+        item = doc.GetFirstItem(key.Name)   
+        val = tuple(convert_datetime(i) for i in item.Values)
+        r = (item.Name, val)
+        items.append(r)
+    items.sort()
+    print('\t',doc.NotesURL,':')
+    for i in items:
+        print('\t',i)
+
+
 def list_views(db):
-    "list views in database"
+    "return views in database"
     for view in db.Views:
         yield view
 
 
 def list_documents(view):
-    "a helper function for listing documents easily in for loops"
+    "return documents in view"
     doc = view.GetFirstDocument()
     while doc:
         yield doc
@@ -31,61 +81,27 @@ def list_documents(view):
 
 
 def get_view(db, view_name):
-    "list views in database"
+    "get requested view"
     return db.GetView(view_name)
 
 
-def describe_view(view):
-    "describe view and first document"
+def get_document(db, view, doc_id):
+    "get document with requested UUID"
     doc = view.GetFirstDocument()
-    print('View:', view.Name)
-    describe_document(doc)
-
-
-def describe_document(doc):
-    "print document information"
-    items = []
-    for key in doc.Items:
-        item = doc.GetFirstItem(key.Name)
-        val = doc.GetItemValue(item.Name)
-        r = (item.Name, val)
-        items.append(r)
-    items.sort()
-    for i in items:
-        print(i)
+    while doc:
+        if doc.UniversalID == doc_id:
+            return doc
+        doc = view.GetNextDocument(doc)
 
 
 def lndoc2obj(doc):
-    """
-    Convert NotesDocument to a Python dictionary-like structure.
-    Structure:
-        {
-            '<first_item_name>': {
-                'values': ('<first value>', '<second value>),
-                'type': 'TEXT',
-                'last_modified': datetime.datetime(2015, 2, 10, 12, 45, 34)
-            },
-            '<second_item_name>': {
-                'values': (datetime.datetime(2015, 2, 1, 0, 0, 0),),
-                'type': 'DATETIMES',
-                'last_modified': datetime.datetime(2015, 2, 2, 10, 13, 43)
-            }
-        }
-    """
+    "Convert NotesDocument to a Python dictionary"
     vals = []
     if doc.Items:
         for k in doc.Items:
-            itm = doc.GetFirstItem(k.Name)
-            if itm.Type in (ItemType.DATETIMES, ItemType.RFC822Text):
-                val = tuple([_dt(i) for i in itm.Values])
-            else:
-                val = doc.GetItemValue(k.Name)
-
-            r = (k.Name, {
-                'values': val,
-                'type': ITEM_TYPES[itm.Type],
-                'last_modified': _dt(itm.LastModified),
-            })
+            item = doc.GetFirstItem(k.Name)   
+            val = tuple(convert_datetime(i) for i in item.Values)
+            r = (k.Name, val)
             vals.append(r)
     return dict(vals)
 
@@ -97,16 +113,29 @@ LN_SERVER = 'Toronto16/BASFPro'
 LN_DB = r"BASF\agprocan\agcreports.nsf"
 LN_VIEW = 'Tableau Report Config'
 
-# Functions
-"TBD Scanner"
-"Lotus connector import"
 db = connect(LN_KEY, LN_SERVER, LN_DB)
-view = get_view(db,LN_VIEW)
+#describe_database(db)
+#
+#describe_view(target_view)
 
-describe_view(view)
-for doc in list_documents(view):
-    print(doc)
+
+target_view = get_view(db,LN_VIEW)
+for doc in list_documents(target_view):
+    #describe_document(doc)
+    print('\n')
+    pprint.pprint(lndoc2obj(doc))
+
+
+#target_doc = get_document(db,target_view,'C93625A4F548DD408525816F0055F3A5')
+#describe_document(target_doc)
+
+
+
+#for doc in list_documents(target_view):
+ #   describe_document(doc)
+
 	
+
 
 
 
