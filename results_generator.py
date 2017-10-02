@@ -1,18 +1,32 @@
 # Test implementation of dynamic table generation using SQL Alchemy ORM capabilities
 # Taken from http://sparrigan.github.io/sql/sqla/2016/01/03/dynamic-tables.html
-import sqlalchemy
+from sqlalchemy import *
+from sqlalchemy.ext.declarative import declarative_base
+#import pyodbc - required by sqlalchemy if connecting to MSSQL db
 
-SERVER_NAME = ''
-DATABASE_NAME = ''
+
+" TODO Get the fucking PYODBC connector working"
+SERVER_NAME = 'CA3BSF2-CASQL01'
+DATABASE_NAME = 'AgProCanada_TableauDEV'
 
 #Establish windows authenticated session - Not yet tested
-engine = sqlalchemy.create_engine('mssql://'+SERVER_NAME+'/'+DATABASE_NAME+'?trusted_connection=yes')
+engine = create_engine('mssql://'+SERVER_NAME+'/'+DATABASE_NAME)
 
 #Required for 'declarative' use of the SQLAlchemy ORM
 Base = declarative_base()
 
+class MyTableClass(Base):
+    __tablename__ = 'myTableName'
+    myFirstCol = Column(Integer, primary_key=True)
+    mySecondCol = Column(Integer, primary_key=True)
+
+
+Base.metadata.create_all(engine)
+
+
+"""
 #Use of Type() to dynamically generate columns. More detail here: http://sahandsaba.com/python-classes-metaclasses.html#metaclasses
-attr_dict = {'__tablename__': 'Lotus_Test',
+attr_dict = {'__tablename__': 'Lotus_Test_1OCT',
 	     'myFirstCol': Column(Integer, primary_key=True),
 	     'mySecondCol': Column(Integer)}
 #Create table from dictionary specified columns
@@ -24,9 +38,11 @@ firstColName = "Ill_decide_later"
 secondColName = "Seriously_quit_bugging_me"
 
 new_row_vals = MyTableClass(**{firstColName: 14, secondColName: 33})
+"""
 
+"""
 # Create Tableau workbooks datatable
-    conn.execute_non_query(""" 
+    conn.execute_non_query(~~~ 
         IF OBJECT_ID('framework.Tableau_workbooks', 'U') IS NOT NULL
             DROP TABLE framework.Tableau_workbooks
         CREATE TABLE [framework].[Tableau_workbooks](
@@ -37,10 +53,10 @@ new_row_vals = MyTableClass(**{firstColName: 14, secondColName: 33})
             CreatedDate VARCHAR(100), 
             UpdatedDate VARCHAR(100),
             Connections VARCHAR(100)
-            )""")  
+            )~~~)  
 
     # Create Tableau connections datatable
-    conn.execute_non_query(""" 
+    conn.execute_non_query(~~~ 
         IF OBJECT_ID('framework.Tableau_connections', 'U') IS NOT NULL
             DROP TABLE framework.Tableau_connections
         CREATE TABLE [framework].[Tableau_connections](
@@ -53,10 +69,10 @@ new_row_vals = MyTableClass(**{firstColName: 14, secondColName: 33})
             EmbedPassword VARCHAR(100),
             ServerAddress VARCHAR(100),### 
             ServerPort VARCHAR(100)
-            )""")  
+            )~~~)  
 
     # Create Tableau views datatable
-    conn.execute_non_query(""" 
+    conn.execute_non_query(~~~ 
         IF OBJECT_ID('framework.Tableau_views', 'U') IS NOT NULL
             DROP TABLE framework.Tableau_views
         CREATE TABLE [framework].[Tableau_views](
@@ -65,14 +81,14 @@ new_row_vals = MyTableClass(**{firstColName: 14, secondColName: 33})
             ViewName VARCHAR(100),
             OwnerID VARCHAR(100),
             TotalViews VARCHAR(100)
-            )""")  
+            )~~~)  
               
     return conn
 
     def create_framework_tables(sql_server, user, password, database):
     conn = _mssql.connect(server=sql_server, user=user, password=password, database=database)
     # Create Lotus report table
-    conn.execute_non_query(""" 
+    conn.execute_non_query(~~~ 
         IF OBJECT_ID('framework.Lotus_reports', 'U') IS NOT NULL
             DROP TABLE framework.Lotus_reports
         CREATE TABLE [framework].[Lotus_reports](
@@ -97,8 +113,9 @@ new_row_vals = MyTableClass(**{firstColName: 14, secondColName: 33})
             ACLReaders VARCHAR(100), 
             UpdatedBy VARCHAR(100), 
             Revisions VARCHAR(100) 
-            )""")
+            )~~~)
 
+"""
     
 """
 if update_db:
@@ -226,6 +243,4 @@ if save_to_file:
     print('Database output to {}'.format(output_file))
 else:
     pp.pprint(reports)
-"""
-
 """

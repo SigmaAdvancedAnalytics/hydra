@@ -13,3 +13,7 @@ sql_server = 'CA3BSF2-CASQL01'
 database = 'AgProCanada_TableauDEV'
 user = getenv("PYMSSQL_USERNAME") #Set this in Powershell using >>> $env:PYMSSQL_USERNAME = "THEKENNAGROUP\Username"
 password = getenv("PYMSSQL_PASSWORD") #Set this in Powershell using >>> $env:PYMSSQL_PASSWORD = "Super_SecretPaword"
+
+from pymssql import _mssql
+conn = _mssql.connect(server=server, user=user, password=password, database=database)
+ conn.execute_non_query("")
