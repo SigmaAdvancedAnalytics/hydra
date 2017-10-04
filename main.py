@@ -1,7 +1,9 @@
 import pprint as pp
 import sys
+import os
 from os import getenv
-from pymssql import _mssql
+import pickle
+import MSSQL_connector as mssql
 
 """
     Hydra is a rapid extraction tool for use in novel data infrastructure environments.
@@ -36,29 +38,52 @@ from pymssql import _mssql
 
 """
 # Config
-output_db_table = 'dbo.maint_lotus_notes'
-update_db = False # Use carefully
+#output_db_table = 'dbo.maint_lotus_notes'
+#update_db = False # Use carefully
 
-# Lotus credentials
-# Python 2 C:\Users\jbarber\AppData\Local\Programs\Python\Python36-32\ python
-LN_KEY = "OldUser34#$" #Todo: convert these into a .env file
-LOTUS_SERVER_NAME = 'Toronto16/BASFPro'
-LOTUS_DB_NAME = r"BASF\agprocan\agcreports.nsf"
-LOTUS_DB_VIEW = 'Tableau Report Config'
 
-# Functions
-"TBD Scanner"
-"Lotus connector import"
-lotus_db = lotus.connect(LN_KEY, SERVER_NAME, DB_NAME) #,workdir=r"C:\Users\[USERNAME]\AppData\Local\IBM\Notes"
-for view in list_views(lotus_db):
-    print(view.Name)
-    for doc in list_documents(view):
-        describe_document(doc)
+#SQL Server credentials
+SQL_SERVER = 'CA3BSF2-CASQL01'
+SQL_DB = 'AgProCanada_TableauDEV'
+SQL_USER = getenv("PYMSSQL_USERNAME") #Set this in Powershell using >>> $env:PYMSSQL_USERNAME = "THEKENNAGROUP\Jbarber"
+SQL_PASS = getenv("PYMSSQL_PASSWORD") #Set this in Powershell using >>> $env:PYMSSQL_PASSWORD = "Super_SecretPaword"
 
-"Tableau connector import"
-"SQL connector import"
-"Join logic"
+
+print(SQL_USER,' : ',SQL_PASS)
+#Tableau connector 
+
+# load pickle dict
+script_loc = os.path.dirname(os.path.realpath(__file__))
+lotus_docs = pickle.load( open( script_loc+"/pickle.dat", "rb" ) )
+pp.pprint(lotus_docs)
+
+#Connect to sql server
+"SQL connector export"
+conn = mssql.connect(SQL_SERVER,SQL_DB,SQL_USER,SQL_PASS)
+mssql.create_lotus_table(conn)
+
+fields = ['FORM', 'DocCode', 'REPORTTYPE', 'SEASON', 'Published', 'ReportAccess',
+        'Workbook', 'Report', 'Width', 'Height', 'FileName',
+        'ReportName', 'ReportDescription', 'SearchKeywords', 'UpdatedBy']
+keys = []
+values = []  
+
+for doc in lotus_docs:
+    print(type(doc))
+    for k, v in doc.items():
+        if k in fields:
+            keys = key.append(k)
+            values = val.append(str(val))
+        
+        conn.execute_non_query("""
+            IF OBJECT_ID('framework.Lotus_reports', 'U') IS NOT NULL 
+            INSERT INTO framework.Lotus_reports ({0})
+            VALUES ({1})
+        """.format(",".join(keys)),*values)
+
 "Results generator"
 "TBD Efficient data load"
+
+
 
 

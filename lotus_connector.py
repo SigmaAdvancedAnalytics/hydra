@@ -1,5 +1,7 @@
 import datetime
-import pprint
+import os
+import pickle
+import pprint as pp
 import pywintypes
 from win32com.client import Dispatch, makepy
 
@@ -8,6 +10,7 @@ makepy.GenerateFromTypeLibSpec('Lotus Domino Objects')
 makepy.GenerateFromTypeLibSpec('IBM Notes Automation Classes')
 
 
+#Database > View > Doc > Item.Values
 def connect(ln_key, server_name, db_name, workdir=None):
     "helper function for creating a new NotesSession"
     if workdir:
@@ -94,7 +97,7 @@ def get_document(db, view, doc_id):
         doc = view.GetNextDocument(doc)
 
 
-def lndoc2obj(doc):
+def lndoc2dict(doc):
     "Convert NotesDocument to a Python dictionary"
     vals = []
     if doc.Items:
@@ -105,56 +108,46 @@ def lndoc2obj(doc):
             vals.append(r)
     return dict(vals)
 
+def pickle_dict(dict,file_loc=None):
+    "Save a dictionary into a pickle file"                              "Pickle is serialising the list, not catching the nested dictionaries. Need to either write a helper func, or append each dict to a single file then retrive all as a list"
+    file = file_loc+'\pickle.p'
+    with open(file, "wb") as f:
+        pickle.dump(dict, f)
 
-# function test
+
+# inline execution as 32-bit python cannot be run from py3 main.py
 # Lotus credentials
+# Python 2 C:\Users\jbarber\AppData\Local\Programs\Python\Python36-32\ python
 LN_KEY = "OldUser34#$" #Todo: convert these into a .env file
 LN_SERVER = 'Toronto16/BASFPro'
 LN_DB = r"BASF\agprocan\agcreports.nsf"
 LN_VIEW = 'Tableau Report Config'
 
-db = connect(LN_KEY, LN_SERVER, LN_DB)
-#describe_database(db)
-#
-#describe_view(target_view)
 
+#connect to lotus db
+print('Connecting to {0}\{1}'.format(LN_SERVER,LN_DB))
+db = connect(LN_KEY, LN_SERVER, LN_DB)
+
+#extract lotus documents as a list of dictionaries
+print('Extracting documents from view {0}'.format(LN_VIEW))
+lotus_docs = []
 
 target_view = get_view(db,LN_VIEW)
 for doc in list_documents(target_view):
-    #describe_document(doc)
-    print('\n')
-    pprint.pprint(lndoc2obj(doc))
+    doc_dict = lndoc2dict(doc)
+    print(doc_dict)
+    lotus_docs.extend(doc_dict)
+print("Extracted {0} Lotus documents.".format(len(lotus_docs)))
+print(lotus_docs)
+#pp.pprint(lotus_docs)
 
 
-#target_doc = get_document(db,target_view,'C93625A4F548DD408525816F0055F3A5')
-#describe_document(target_doc)
+#pickle dict
+script_loc = os.path.dirname(os.path.realpath(__file__))
+print('Writing to pickle file in {0}.'.format(script_loc))
+pickle_dict(lotus_docs,script_loc)
+print('Pickle complete')
 
-
-
-#for doc in list_documents(target_view):
- #   describe_document(doc)
-
-	
-
-
-
-
-
-
-"""
-	for item in doc.Items:
-		val = doc.GetItemValue(Item.Name)
-		print(Item.Name,' : ',val)
-		
-
-
-#Database > View > Doc > Item.Values
-
-import win32com.client
-session = win32com.client.Dispatch('Lotus.NotesSession')
-session.Initialize(r'pppppppp')
-db = session.GetDatabase('',r'dddddddd.nsf')
-view = db.GetView(r'vvvvvvvv')
-doc = view.GetFirstDocument()
-print doc.GetFirstItem('iiiiii').Values
-"""
+# load pickle dict
+lotus_docs = pickle.load( open( script_loc+"/pickle.p", "rb" ) )
+print(lotus_docs)
