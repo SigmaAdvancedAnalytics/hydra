@@ -2,6 +2,7 @@
 import psycopg2
 import sys
  
+ #https://onlinehelp.tableau.com/current/server/en-us/data_dictionary.html
 #Define our connection string
 conn_string = "host='10.101.191.13' dbname='workgroup' user='readonly' password='KennaG123' port='8060'"
 

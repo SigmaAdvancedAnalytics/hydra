@@ -49,13 +49,11 @@ SQL_USER = getenv("PYMSSQL_USERNAME") #Set this in Powershell using >>> $env:PYM
 SQL_PASS = getenv("PYMSSQL_PASSWORD") #Set this in Powershell using >>> $env:PYMSSQL_PASSWORD = "Super_SecretPaword"
 
 
-print(SQL_USER,' : ',SQL_PASS)
 #Tableau connector 
 
 # load pickle dict
-script_loc = os.path.dirname(os.path.realpath(__file__))
-lotus_docs = pickle.load( open( script_loc+"/pickle.dat", "rb" ) )
-pp.pprint(lotus_docs)
+pickle_file = os.path.dirname(os.path.realpath(__file__))+'\pickle.p'
+lotus_docs = pickle.load(open(pickle_file, "rb"))
 
 #Connect to sql server
 "SQL connector export"
@@ -65,21 +63,20 @@ mssql.create_lotus_table(conn)
 fields = ['FORM', 'DocCode', 'REPORTTYPE', 'SEASON', 'Published', 'ReportAccess',
         'Workbook', 'Report', 'Width', 'Height', 'FileName',
         'ReportName', 'ReportDescription', 'SearchKeywords', 'UpdatedBy']
-keys = []
-values = []  
 
 for doc in lotus_docs:
-    print(type(doc))
+    keys = []
+    values = []
     for k, v in doc.items():
         if k in fields:
-            keys = key.append(k)
-            values = val.append(str(val))
-        
-        conn.execute_non_query("""
-            IF OBJECT_ID('framework.Lotus_reports', 'U') IS NOT NULL 
-            INSERT INTO framework.Lotus_reports ({0})
-            VALUES ({1})
-        """.format(",".join(keys)),*values)
+            keys.append(k)
+            values.append(str(';'.join(v)))
+    conn.execute_non_query("""
+       IF OBJECT_ID('framework.Lotus_reports', 'U') IS NOT NULL 
+       INSERT INTO framework.Lotus_reports ({0})
+        VALUES ('{1}')
+    """.format(','.join(keys),"','".join(values)))
+    
 
 "Results generator"
 "TBD Efficient data load"

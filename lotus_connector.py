@@ -108,11 +108,9 @@ def lndoc2dict(doc):
             vals.append(r)
     return dict(vals)
 
-def pickle_dict(dict,file_loc=None):
-    "Save a dictionary into a pickle file"                              "Pickle is serialising the list, not catching the nested dictionaries. Need to either write a helper func, or append each dict to a single file then retrive all as a list"
-    file = file_loc+'\pickle.p'
-    with open(file, "wb") as f:
-        pickle.dump(dict, f)
+def pickle_dict(dict,file_loc='\pickle.p'):
+    "Save a dictionary into a pickle file"
+    pickle.dump(dict, open(file_loc, "wb"))
 
 
 # inline execution as 32-bit python cannot be run from py3 main.py
@@ -125,29 +123,20 @@ LN_VIEW = 'Tableau Report Config'
 
 
 #connect to lotus db
-print('Connecting to {0}\{1}'.format(LN_SERVER,LN_DB))
+print('Connecting to {0}/{1}'.format(LN_SERVER,LN_DB))
 db = connect(LN_KEY, LN_SERVER, LN_DB)
 
 #extract lotus documents as a list of dictionaries
 print('Extracting documents from view {0}'.format(LN_VIEW))
 lotus_docs = []
-
 target_view = get_view(db,LN_VIEW)
 for doc in list_documents(target_view):
     doc_dict = lndoc2dict(doc)
-    print(doc_dict)
-    lotus_docs.extend(doc_dict)
+    lotus_docs.append(doc_dict)
 print("Extracted {0} Lotus documents.".format(len(lotus_docs)))
-print(lotus_docs)
-#pp.pprint(lotus_docs)
 
-
-#pickle dict
-script_loc = os.path.dirname(os.path.realpath(__file__))
-print('Writing to pickle file in {0}.'.format(script_loc))
-pickle_dict(lotus_docs,script_loc)
+#Save the list of dictionaries as a Pickle file
+pickle_file = os.path.dirname(os.path.realpath(__file__))+'\pickle.p'
+print('Writing to pickle file {0}'.format(pickle_file))
+pickle_dict(lotus_docs,pickle_file)
 print('Pickle complete')
-
-# load pickle dict
-lotus_docs = pickle.load( open( script_loc+"/pickle.p", "rb" ) )
-print(lotus_docs)

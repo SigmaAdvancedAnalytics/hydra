@@ -14,7 +14,7 @@ SELECT
 		,[TABLE_CREATE_DATE] = [CREATE_DATE]
 		,[TABLE_MODIFY_DATE] = [MODIFY_DATE]
 	--INTO #tables
-FROM sys.tables where name like '%salesdashboard%' or name like '%transa%'
+FROM sys.tables where name like '%call%' 
 order by modify_date desc
 
 
@@ -39,10 +39,9 @@ SELECT
 			,[ROUTINE_CREATED_DATE] = rt1.[CREATED]
 			,[ROUTINE_LAST_ALTERED_DATE] = rt1.[LAST_ALTERED]
 			,rt1.[ROUTINE_DEFINITION] 
-			,[SUB_ROUTINES] = COUNT(rt2.[ROUTINE_NAME])
-			,[SUB_VIEWS] = COUNT(views.[TABLE_NAME])
-	INTO #routines
+	--INTO #routines
 FROM information_schema.routines rt1
+where routine_name like '%farmprofile%'
 LEFT JOIN information_schema.routines rt2 ON rt1.[ROUTINE_NAME] = (CASE PATINDEX('%'+rt1.[ROUTINE_NAME]+'%',rt2.[ROUTINE_DEFINITION]) WHEN 0 THEN NULl ELSE rt1.[ROUTINE_NAME] END)
 LEFT JOIN information_schema.views views ON (CASE PATINDEX('%'+views.[TABLE_NAME]+'%',rt1.[ROUTINE_DEFINITION]) WHEN 0 THEN NULl ELSE views.[TABLE_NAME] END) = views.[TABLE_NAME]
 GROUP BY rt1.[ROUTINE_CATALOG]

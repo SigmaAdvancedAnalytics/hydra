@@ -24,27 +24,27 @@ def create_lotus_table(conn):
     IF OBJECT_ID('framework.Lotus_reports', 'U') IS NOT NULL
 	         DROP TABLE framework.Lotus_reports
     	    CREATE TABLE [framework].[Lotus_reports](
-        	    FORM VARCHAR(100), 
-            	DocCode VARCHAR(100), 
-	            REPORTTYPE VARCHAR(100), 
-	            SEASON VARCHAR(100), 
-	            Published VARCHAR(100), 
-	            Created VARCHAR(100), 
-	            ReportAccess VARCHAR(100), 
-	            ReportAccessNames VARCHAR(100), 
-	            ACLAuthors VARCHAR(100), 
-	            PDF VARCHAR(100), 
-	            Workbook VARCHAR(100), 
-	            Report VARCHAR(100), 
-	            Width VARCHAR(100), 
-	            Height VARCHAR(100), 
-	            FileName VARCHAR(100), 
-	            ReportName VARCHAR(100), 
-	            ReportDescription VARCHAR(100), 
-	            SearchKeywords VARCHAR(100), 
-	            ACLReaders VARCHAR(100), 
-	            UpdatedBy VARCHAR(100), 
-	            Revisions VARCHAR(100) 
+        	    FORM VARCHAR(500), 
+            	DocCode VARCHAR(500), 
+	            REPORTTYPE VARCHAR(500), 
+	            SEASON VARCHAR(500), 
+	            Published VARCHAR(500), 
+	            Created VARCHAR(500), 
+	            ReportAccess VARCHAR(500), 
+	            ReportAccessNames VARCHAR(500), 
+	            ACLAuthors VARCHAR(500), 
+	            PDF VARCHAR(500), 
+	            Workbook VARCHAR(500), 
+	            Report VARCHAR(500), 
+	            Width VARCHAR(500), 
+	            Height VARCHAR(500), 
+	            FileName VARCHAR(500), 
+	            ReportName VARCHAR(500), 
+	            ReportDescription VARCHAR(500), 
+	            SearchKeywords VARCHAR(500), 
+	            ACLReaders VARCHAR(500), 
+	            UpdatedBy VARCHAR(500), 
+	            Revisions VARCHAR(500) 
             )""")
 
 	

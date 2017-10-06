@@ -1,5 +1,8 @@
 # Test implementation of dynamic table generation using SQL Alchemy ORM capabilities
 # Taken from http://sparrigan.github.io/sql/sqla/2016/01/03/dynamic-tables.html
+
+#http://support.esri.com/en/technical-article/000011656 for setting up pyodbc
+
 from sqlalchemy import *
 from sqlalchemy.ext.declarative import declarative_base
 #import pyodbc - required by sqlalchemy if connecting to MSSQL db
@@ -86,7 +89,6 @@ new_row_vals = MyTableClass(**{firstColName: 14, secondColName: 33})
     return conn
 
     def create_framework_tables(sql_server, user, password, database):
-    conn = _mssql.connect(server=sql_server, user=user, password=password, database=database)
     # Create Lotus report table
     conn.execute_non_query(~~~ 
         IF OBJECT_ID('framework.Lotus_reports', 'U') IS NOT NULL
