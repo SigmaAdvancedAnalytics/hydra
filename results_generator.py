@@ -7,6 +7,7 @@ from sqlalchemy import *
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import pymssql
+import functools
 
 def connect(host,dbname,user,password,port=1433,driver='mssql+pymssql'): #1433 is default MSSQL port
     "helper function for creating MSSQL db connection"
@@ -29,18 +30,23 @@ SQL_DRIVER = 'mssql+pymssql'
 
 conn,session,engine = connect(SQL_SERVER,SQL_DB,SQL_USER,SQL_PASS,port=1433,driver=SQL_DRIVER)
 
+#Store table Dataframe
+#Connect to DB
+#
+
+# load pickle dict
+pickle_file = os.path.dirname(os.path.realpath(__file__))+'\pickle.p'
+lotus_docs = pickle.load(open(pickle_file, "rb"))
+
+
+max(map(len, d))
+
+
+
+
 
 #Required for 'declarative' use of the SQLAlchemy ORM
 Base = declarative_base()
-
-#class MyTableClass(Base):
- #   __tablename__ = 'myTableName'
-  #  myFirstCol = Column(Integer, primary_key=True)
-   # mySecondCol = Column(Integer, primary_key=True)
-
-
-#Base.metadata.create_all(engine)
-
 
 #Use of Type() to dynamically generate columns. More detail here: http://sahandsaba.com/python-classes-metaclasses.html#metaclasses
 attr_dict = {'__tablename__': 'Lotus_Test_1OCT',
@@ -58,6 +64,23 @@ secondColName = "mySecondCol"
 new_row_vals = LotusTableClass(**{firstColName: 28, secondColName: 66})
 session.add(new_row_vals) # Add to session
 session.commit() # Commit everything in session
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 """
 # Create Tableau workbooks datatable
