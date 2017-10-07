@@ -1,21 +1,53 @@
 #!/usr/bin/python
 import psycopg2
 import sys
- 
+import pprint as pp
+import pandas as pd
  #https://onlinehelp.tableau.com/current/server/en-us/data_dictionary.html
-#Define our connection string
-conn_string = "host='10.101.191.13' dbname='workgroup' user='readonly' password='KennaG123' port='8060'"
 
-# print the connection string we will use to connect
-print("Connecting to database\n	->%s" % (conn_string))
+def connect(host,dbname,user,password,port=5432): #5432 is default Postgres port
+    "helper function for creating postgres db connection"
+    # get a connection, if a connect cannot be made an exception will be raised here
+    conn = psycopg2.connect(host=host,dbname=dbname,user=user,password=password,port=port)
+    # conn.cursor will return a cursor object, you can use this cursor to perform queries
+    cursor = conn.cursor()
+    return cursor,conn
 
-# get a connection, if a connect cannot be made an exception will be raised here
-conn = psycopg2.connect(conn_string)
+def list_tables(cursor):
+    "return a tuple of all tables in database"
+    cursor.execute("""
+                SELECT table_schema || '.' || table_name
+                FROM information_schema.tables
+                WHERE table_type = 'BASE TABLE'
+                AND table_schema NOT IN ('pg_catalog', 'information_schema');
+                """)
+    results = cursor.fetchall()
+    results.sort()
+    results_list = list(sum(results, ())) #magically turns a list of tuples into a flat list
+    return results_list
 
-# conn.cursor will return a cursor object, you can use this cursor to perform queries
-cursor = conn.cursor()
+# Test main
+# Tableau repository details
+HOST = '10.101.191.13'
+DBNAME = 'workgroup'
+USER = 'readonly'
+PASSWORD = 'KennaG123'
+PORT = 8060
+
+# Establish connection and return connection & cursor
+print("Connecting to database...")
+cursor,conn = connect(HOST,DBNAME,USER,PASSWORD,PORT)
 print("Connected!\n")
+  
+# 
+results = list_tables(cursor)
+print(results)
 
+
+#conn_string = "host='10.101.191.13' dbname='workgroup' user='readonly' password='KennaG123' port='8060'"
+
+
+"""
 def tableau_server_import(tableau_auth, tab_server):
     try:
         #Connect to Tableau server
@@ -32,7 +64,7 @@ def tableau_server_import(tableau_auth, tab_server):
     except:
         return sys.exc_info()        
 
-workbooks, connections, views = tableau_server_import(tableau_auth, tab_server)
+workbooks, connections, views = tableau_server_import(tableau_auth, tab_server) """
 
 
 #KennaG123
