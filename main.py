@@ -80,21 +80,11 @@ for doc in lotus_docs:
     """.format(','.join(keys),"','".join(values)))
     
 
-# MSSQL details
-#SQL Server credentials
-SQL_SERVER = 'CA3BSF2-CASQL01'
-SQL_DB = 'AgProCanada_TableauDEV'
-SQL_USER = getenv("PYMSSQL_USERNAME") #Set this in Powershell using >>> $env:PYMSSQL_USERNAME = "THEKENNAGROUP\Jbarber"
-SQL_PASS = getenv("PYMSSQL_PASSWORD") #Set this in Powershell using >>> $env:PYMSSQL_PASSWORD = "Super_SecretPaword"
-SQL_PORT = 1433
-SQL_DRIVER = 'mssql+pymssql'
+#Bulk insert - one day
+Base = declarative_base()
 
-conn,engine = connect(SQL_SERVER,SQL_DB,SQL_USER,SQL_PASS,port=1433,driver=SQL_DRIVER)
-
-# List tables
-print("Database tables:\n")
-results = list_tables(conn)
-pp.pprint(results)  
+    records = df.to_dict(orient='records')
+    result = db_pool.execute(entity.__table__.insert(), records)
 
 "Results generator"
 "TBD Efficient data load"
