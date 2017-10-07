@@ -1,30 +1,37 @@
 #!/usr/bin/python
-import psycopg2
-import sys
-import pprint as pp
 import pandas as pd
+import sqlalchemy
+import psycopg2
+import pprint as pp
  #https://onlinehelp.tableau.com/current/server/en-us/data_dictionary.html
 
-def connect(host,dbname,user,password,port=5432): #5432 is default Postgres port
-    "helper function for creating postgres db connection"
-    # get a connection, if a connect cannot be made an exception will be raised here
-    conn = psycopg2.connect(host=host,dbname=dbname,user=user,password=password,port=port)
-    # conn.cursor will return a cursor object, you can use this cursor to perform queries
-    cursor = conn.cursor()
-    return cursor,conn
 
-def list_tables(cursor):
+def connect(host,dbname,user,password,port=5432,driver='postgresql+psycopg2'): #5432 is default Postgres port
+    "helper function for creating postgres db connection"
+    #'postgresql+psycopg2://user:password@hostname/database_name'
+    engine = sqlalchemy.create_engine('{}://{}:{}@{}:{}/{}'.format(driver,user,password,host,port,dbname))
+    conn = engine.connect()
+    return conn,engine
+
+def list_tables(conn):
     "return a tuple of all tables in database"
-    cursor.execute("""
+    results = conn.execute("""
                 SELECT table_schema || '.' || table_name
                 FROM information_schema.tables
                 WHERE table_type = 'BASE TABLE'
                 AND table_schema NOT IN ('pg_catalog', 'information_schema');
-                """)
-    results = cursor.fetchall()
-    results.sort()
-    results_list = list(sum(results, ())) #magically turns a list of tuples into a flat list
+                """) 
+    results_list = [row[0] for row in results]
+    results_list.sort()
     return results_list
+
+def get_table(tablename,engine,schema):
+    df = pd.read_sql_table(tablename, engine,schema)
+    return df
+
+def exec_query():
+    return True
+    #the_frame = pd.read_sql_query("SELECT * FROM %s;" % name_of_table, engine)
 
 # Test main
 # Tableau repository details
@@ -33,18 +40,26 @@ DBNAME = 'workgroup'
 USER = 'readonly'
 PASSWORD = 'KennaG123'
 PORT = 8060
+#PG_DRIVER = 'postgresql+psycopg2'
 
 # Establish connection and return connection & cursor
 print("Connecting to database...")
-cursor,conn = connect(HOST,DBNAME,USER,PASSWORD,PORT)
-print("Connected!\n")
+conn,engine = connect(HOST,DBNAME,USER,PASSWORD,port=PORT)
+print("Connected!")
   
-# 
-results = list_tables(cursor)
-print(results)
+# List tables
+print("Database tables:\n")
+results = list_tables(conn)
+pp.pprint(results)
 
 
-#conn_string = "host='10.101.191.13' dbname='workgroup' user='readonly' password='KennaG123' port='8060'"
+# Return tables
+target_tables = ['datasources','users','views','workbooks']
+schema = 'public'
+for tablename in target_tables:
+    table = get_table(tablename,conn,schema)
+    pp.pprint(table)
+
 
 
 """
