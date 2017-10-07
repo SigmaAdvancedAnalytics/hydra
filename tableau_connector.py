@@ -19,7 +19,7 @@ def list_tables(conn):
                 SELECT table_schema || '.' || table_name
                 FROM information_schema.tables
                 WHERE table_type = 'BASE TABLE'
-                AND table_schema NOT IN ('pg_catalog', 'information_schema');
+                AND table_schema NOT IN ('pg_catalog','information_schema');
                 """) 
     results_list = [row[0] for row in results]
     results_list.sort()
@@ -57,8 +57,8 @@ pp.pprint(results)
 target_tables = ['datasources','users','views','workbooks']
 schema = 'public'
 for tablename in target_tables:
-    table = get_table(tablename,conn,schema)
-    pp.pprint(table)
+    table_df = get_table(tablename,conn,schema)
+    pp.pprint(table_df)
 
 
 

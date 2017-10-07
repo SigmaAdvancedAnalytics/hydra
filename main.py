@@ -3,7 +3,9 @@ import sys
 import os
 from os import getenv
 import pickle
+import pymssql
 import MSSQL_connector as mssql
+
 
 """
     Hydra is a rapid extraction tool for use in novel data infrastructure environments.
@@ -77,6 +79,22 @@ for doc in lotus_docs:
         VALUES ('{1}')
     """.format(','.join(keys),"','".join(values)))
     
+
+# MSSQL details
+#SQL Server credentials
+SQL_SERVER = 'CA3BSF2-CASQL01'
+SQL_DB = 'AgProCanada_TableauDEV'
+SQL_USER = getenv("PYMSSQL_USERNAME") #Set this in Powershell using >>> $env:PYMSSQL_USERNAME = "THEKENNAGROUP\Jbarber"
+SQL_PASS = getenv("PYMSSQL_PASSWORD") #Set this in Powershell using >>> $env:PYMSSQL_PASSWORD = "Super_SecretPaword"
+SQL_PORT = 1433
+SQL_DRIVER = 'mssql+pymssql'
+
+conn,engine = connect(SQL_SERVER,SQL_DB,SQL_USER,SQL_PASS,port=1433,driver=SQL_DRIVER)
+
+# List tables
+print("Database tables:\n")
+results = list_tables(conn)
+pp.pprint(results)  
 
 "Results generator"
 "TBD Efficient data load"
