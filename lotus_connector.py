@@ -5,6 +5,7 @@ import pprint as pp
 import pywintypes
 from win32com.client import Dispatch, makepy
 
+# Execute using 32bit Python C:\Users\jbarber\AppData\Local\Programs\Python\Python36-32\python
 # Update win32com to use the IBM Notes classes
 makepy.GenerateFromTypeLibSpec('Lotus Domino Objects')
 makepy.GenerateFromTypeLibSpec('IBM Notes Automation Classes')
@@ -103,8 +104,8 @@ def lndoc2dict(doc):
     if doc.Items:
         for k in doc.Items:
             item = doc.GetFirstItem(k.Name)   
-            val = tuple(convert_datetime(i) for i in item.Values)
-            r = (k.Name, val)
+            val = list(convert_datetime(i) for i in item.Values)
+            r = (k.Name, ';'.join(val))
             vals.append(r)
     return dict(vals)
 
@@ -115,7 +116,6 @@ def pickle_dict(dict,file_loc='\pickle.p'):
 
 # inline execution as 32-bit python cannot be run from py3 main.py
 # Lotus credentials
-# Python 2 C:\Users\jbarber\AppData\Local\Programs\Python\Python36-32\ python
 LN_KEY = "OldUser34#$" #Todo: convert these into a .env file
 LN_SERVER = 'Toronto16/BASFPro'
 LN_DB = r"BASF\agprocan\agcreports.nsf"

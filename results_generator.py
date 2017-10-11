@@ -4,6 +4,10 @@ from sqlalchemy.orm import sessionmaker
 import pymssql
 import pickle
 from os import getenv, path
+import pprint as pp
+
+def unique_keys():
+    ""
 
 def connect(host,dbname,user,password,port=1433,driver='mssql+pymssql'): #1433 is default MSSQL port
     "Helper function for creating MSSQL db connection"
@@ -18,17 +22,19 @@ def create_schema(tablename,source): #TODO figure out how to sort columns - orde
     "Create sqlalchemy table from dictionary specified columns"
     #Create a dictionary of the required table attributes - clever but not quite wizardry
     fieldnames = list(set().union(*(dict.keys() for dict in source))) #create a unique set of all dict keys
-    attr_dict = dict( ((field, Column(String(300))) for field in fieldnames) ) #turn each key into a String(varchar) column
+    attr_dict = dict( ((field, Column(String(800))) for field in fieldnames) ) #turn each key into a String(varchar) column
     attr_dict['ID'] = Column(Integer, primary_key=True) # add a PK - SQLAlchemy demands this
     attr_dict['__tablename__'] = tablename #tablename assignment is done inside the dictionary
     return attr_dict
 
-def create_table(attr_dict,engine): #TODO order the fields
+def create_table(attr_dict,engine,drop=False): #TODO order the fields
     "Create table from dictionary attributes"
-    #Uses dark, dark SQLAlchemy metaclass magic - taken from http://sparrigan.github.io/sql/sqla/2016/01/03/dynamic-tables.html
+    #Dark, dark SQLAlchemy metaclass magic - taken from http://sparrigan.github.io/sql/sqla/2016/01/03/dynamic-tables.html
     Base = declarative_base() #Required for 'declarative' use of the SQLAlchemy ORM
     GenericTableClass = type('GenericTableClass', (Base,), attr_dict) #Use of Type() to dynamically generate columns. More detail here: http://sahandsaba.com/python-classes-metaclasses.html#metaclasses
-    Base.metadata.create_all(engine) #Wholly unsure of the scope of this
+    if drop:
+        Base.metadata.drop_all(engine) #Drop all tables in the scope of this metadata
+    Base.metadata.create_all(engine) #Create all tables in the scope of this metadata
     return GenericTableClass,'Table {} successfully created'.format(attr_dict['__tablename__'])
 
 # MSSQL details
@@ -42,32 +48,33 @@ SQL_DRIVER = 'mssql+pymssql'
 
 
 #Connect to DB
+print('Connecting to SQL server')
 sql_conn,sql_session,sql_engine = connect(SQL_SERVER,SQL_DB,SQL_USER,SQL_PASS,port=1433,driver=SQL_DRIVER)
  
 
 # load pickle dict
 pickle_file = path.dirname(path.realpath(__file__))+'\pickle.p'
+
+print('Loading Pickle file {} into list of dictionaries'.format(pickle_file))
 lotus_docs = pickle.load(open(pickle_file, "rb"))
 
 
 # create table
-tablename = 'Lotus_test11'
+tablename = 'Lotus_test_11'
+print('Creating table {}'.format(tablename))
 lotus_attr_dict = create_schema(tablename,lotus_docs)
-lotus_table,msg = create_table(lotus_attr_dict,sql_engine)
-print(lotus_table,msg)
+lotus_table,msg = create_table(lotus_attr_dict,sql_engine,drop=True)
 
-
-
+pp.pprint(lotus_attr_dict)
 
 # Dynamic insert using Dictionary unpacking
-"""
-firstColName = "myFirstCol"
-secondColName = "mySecondCol"
+print('Inserting rows')
+for doc in lotus_docs:
+    new_row_vals = lotus_table(**doc)
+    sql_session.add(new_row_vals) # Add to session
+    sql_session.commit() # Commit everything in session
 
-new_row_vals = LotusTableClass(**{firstColName: 28, secondColName: 66})
-session.add(new_row_vals) # Add to session
-session.commit() # Commit everything in session
-"""
+print('Export complete!')
 
 
 
