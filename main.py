@@ -86,5 +86,91 @@ print('Export complete!')
 "TBD Efficient data load"
 
 
+"""
+# Create Tableau workbooks datatable
+    conn.execute_non_query(~~~ 
+        IF OBJECT_ID('framework.Tableau_workbooks', 'U') IS NOT NULL
+            DROP TABLE framework.Tableau_workbooks
+        CREATE TABLE [framework].[Tableau_workbooks](
+            WorkbookID VARCHAR(100),
+            WorkbookName VARCHAR(100), 
+            ContentURL VARCHAR(100), 
+            ProjectName VARCHAR(100),
+            CreatedDate VARCHAR(100), 
+            UpdatedDate VARCHAR(100),
+            Connections VARCHAR(100)
+            )~~~)  
+
+    # Create Tableau connections datatable
+    conn.execute_non_query(~~~ 
+        IF OBJECT_ID('framework.Tableau_connections', 'U') IS NOT NULL
+            DROP TABLE framework.Tableau_connections
+        CREATE TABLE [framework].[Tableau_connections](
+            ConnectionID VARCHAR(100),
+            DatasourceID VARCHAR(100),### 
+            DatasourceName VARCHAR(100), 
+            ConnectionType VARCHAR(100),
+            Username VARCHAR(100),### 
+            Password VARCHAR(100), 
+            EmbedPassword VARCHAR(100),
+            ServerAddress VARCHAR(100),### 
+            ServerPort VARCHAR(100)
+            )~~~)  
+
+    # Create Tableau views datatable
+    conn.execute_non_query(~~~ 
+        IF OBJECT_ID('framework.Tableau_views', 'U') IS NOT NULL
+            DROP TABLE framework.Tableau_views
+        CREATE TABLE [framework].[Tableau_views](
+            WorkbookID VARCHAR(100),
+            ViewID VARCHAR(100), 
+            ViewName VARCHAR(100),
+            OwnerID VARCHAR(100),
+            TotalViews VARCHAR(100)
+            )~~~)  
+              
+    return conn
+
+    def create_framework_tables(sql_server, user, password, database):
+    # Create Lotus report table
+    conn.execute_non_query(~~~ 
+        IF OBJECT_ID('framework.Lotus_reports', 'U') IS NOT NULL
+            DROP TABLE framework.Lotus_reports
+        CREATE TABLE [framework].[Lotus_reports](
+            FORM VARCHAR(100), 
+            DocCode VARCHAR(100), 
+            REPORTTYPE VARCHAR(100), 
+            SEASON VARCHAR(100), 
+            Published VARCHAR(100), 
+            Created VARCHAR(100), 
+            ReportAccess VARCHAR(100), 
+            ReportAccessNames VARCHAR(100), 
+            ACLAuthors VARCHAR(100), 
+            PDF VARCHAR(100), 
+            Workbook VARCHAR(100), 
+            Report VARCHAR(100), 
+            Width VARCHAR(100), 
+            Height VARCHAR(100), 
+            FileName VARCHAR(100), 
+            ReportName VARCHAR(100), 
+            ReportDescription VARCHAR(100), 
+            SearchKeywords VARCHAR(100), 
+            ACLReaders VARCHAR(100), 
+            UpdatedBy VARCHAR(100), 
+            Revisions VARCHAR(100) 
+            )~~~)
+
+
+# Export to JSON file if flag set, otherwise STDOUT
+if save_to_file:
+    jsonarray = json.dumps(reports)
+    pp.pprint(jsonarray) #test
+    f = open(output_file, "w")
+    f.write(jsonarray)
+    f.close()
+    print('Database output to {}'.format(output_file))
+else:
+    pp.pprint(reports)
+"""
 
 
