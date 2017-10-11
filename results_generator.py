@@ -3,11 +3,19 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import pymssql
 import pickle
+import sys
 from os import getenv, path
 import pprint as pp
 
-def unique_keys():
-    ""
+def dict_attributes(source):
+    "return dictionaries attributes required to generate table schema"
+    fieldnames = dict(set().union(*(dict.keys() for dict in source))) #create a unique set of all dict keys
+    print(fieldnames)
+    for dict in source:
+        max_len=max(dict, key=lambda k: len(dict[k]))
+    
+    return fieldnames,len(dict[max_len]), max_len
+
 
 def connect(host,dbname,user,password,port=1433,driver='mssql+pymssql'): #1433 is default MSSQL port
     "Helper function for creating MSSQL db connection"
@@ -21,8 +29,9 @@ def connect(host,dbname,user,password,port=1433,driver='mssql+pymssql'): #1433 i
 def create_schema(tablename,source): #TODO figure out how to sort columns - ordered dicts etc. seem to have no effect
     "Create sqlalchemy table from dictionary specified columns"
     #Create a dictionary of the required table attributes - clever but not quite wizardry
-    fieldnames = list(set().union(*(dict.keys() for dict in source))) #create a unique set of all dict keys
-    attr_dict = dict( ((field, Column(String(800))) for field in fieldnames) ) #turn each key into a String(varchar) column
+    fields = list(set().union(*(dict.keys() for dict in source))) #create a unique set of all dict keys
+    fields.sort()
+    attr_dict = dict(((field,Column(String(800)) ) for field in fields)) #turn each key into a String(varchar) column
     attr_dict['ID'] = Column(Integer, primary_key=True) # add a PK - SQLAlchemy demands this
     attr_dict['__tablename__'] = tablename #tablename assignment is done inside the dictionary
     return attr_dict
@@ -54,11 +63,30 @@ sql_conn,sql_session,sql_engine = connect(SQL_SERVER,SQL_DB,SQL_USER,SQL_PASS,po
 
 # load pickle dict
 pickle_file = path.dirname(path.realpath(__file__))+'\pickle.p'
-
 print('Loading Pickle file {} into list of dictionaries'.format(pickle_file))
 lotus_docs = pickle.load(open(pickle_file, "rb"))
 
 
+fields = list(set().union(*(dict.keys() for dict in lotus_docs))) #create a unique set of all dict keys
+fields.sort()
+
+fields_dict = {}
+for field in fields:
+    max_val = []
+    for doc in lotus_docs:
+        if field in doc:
+            max_val.append(len(doc[field]))
+    fields_dict[field] = max(max_val)
+pp.pprint(fields_dict)
+
+attr_dict = dict(((field,Column(String(fields_dict[field])) ) for field in fields_dict)) #turn each key into a String(varchar) column
+pp.pprint(attr_dict)
+
+
+
+
+
+"""
 # create table
 tablename = 'Lotus_test_11'
 print('Creating table {}'.format(tablename))
@@ -76,7 +104,7 @@ for doc in lotus_docs:
 
 print('Export complete!')
 
-
+"""
 
 
 """
