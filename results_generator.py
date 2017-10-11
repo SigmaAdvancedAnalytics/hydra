@@ -2,19 +2,19 @@ from sqlalchemy import *
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import pymssql
-import pickle
-import sys
-from os import getenv, path
-import pprint as pp
 
-def dict_attributes(source):
+def dict_attributes(dict_list):
     "return dictionaries attributes required to generate table schema"
-    fieldnames = dict(set().union(*(dict.keys() for dict in source))) #create a unique set of all dict keys
-    print(fieldnames)
-    for dict in source:
-        max_len=max(dict, key=lambda k: len(dict[k]))
-    
-    return fieldnames,len(dict[max_len]), max_len
+    fields_dict = {}
+    fields = list(set().union(*(dict.keys() for dict in dict_list))) #create a unique set of all dict keys
+    fields.sort()
+    for field in fields:
+        max_val = []
+        for dict in dict_list:
+            if field in dict:
+                max_val.append(len(dict[field]))
+        fields_dict[field] = max(max(max_val),1) # give field length a minimum of 1 or it defaults to MAX when assigned as a column
+    return fields_dict
 
 
 def connect(host,dbname,user,password,port=1433,driver='mssql+pymssql'): #1433 is default MSSQL port
@@ -26,12 +26,10 @@ def connect(host,dbname,user,password,port=1433,driver='mssql+pymssql'): #1433 i
     session = Session() # I wonder if we can collapse these using a Lambda
     return conn,session,engine
 
-def create_schema(tablename,source): #TODO figure out how to sort columns - ordered dicts etc. seem to have no effect
+def create_schema(tablename,dict_list): #TODO figure out how to sort columns - ordered dicts etc. seem to have no effect
     "Create sqlalchemy table from dictionary specified columns"
-    #Create a dictionary of the required table attributes - clever but not quite wizardry
-    fields = list(set().union(*(dict.keys() for dict in source))) #create a unique set of all dict keys
-    fields.sort()
-    attr_dict = dict(((field,Column(String(800)) ) for field in fields)) #turn each key into a String(varchar) column
+    fields_dict = dict_attributes(dict_list) #Create a dictionary of the required table attributes - clever but not quite wizardry
+    attr_dict = dict(((field,Column(String(fields_dict[field])) ) for field in fields_dict)) #turn each key into a String(varchar) column using the max lengths from fields_dict
     attr_dict['ID'] = Column(Integer, primary_key=True) # add a PK - SQLAlchemy demands this
     attr_dict['__tablename__'] = tablename #tablename assignment is done inside the dictionary
     return attr_dict
@@ -46,65 +44,7 @@ def create_table(attr_dict,engine,drop=False): #TODO order the fields
     Base.metadata.create_all(engine) #Create all tables in the scope of this metadata
     return GenericTableClass,'Table {} successfully created'.format(attr_dict['__tablename__'])
 
-# MSSQL details
-#SQL Server credentials
-SQL_SERVER = 'CA3BSF2-CASQL01'
-SQL_DB = 'AgProCanada_TableauDEV'
-SQL_USER = getenv("PYMSSQL_USERNAME") #Set this in Powershell using >>> $env:PYMSSQL_USERNAME = "THEKENNAGROUP\Jbarber"
-SQL_PASS = getenv("PYMSSQL_PASSWORD") #Set this in Powershell using >>> $env:PYMSSQL_PASSWORD = "Super_SecretPaword"
-SQL_PORT = 1433
-SQL_DRIVER = 'mssql+pymssql'
 
-
-#Connect to DB
-print('Connecting to SQL server')
-sql_conn,sql_session,sql_engine = connect(SQL_SERVER,SQL_DB,SQL_USER,SQL_PASS,port=1433,driver=SQL_DRIVER)
- 
-
-# load pickle dict
-pickle_file = path.dirname(path.realpath(__file__))+'\pickle.p'
-print('Loading Pickle file {} into list of dictionaries'.format(pickle_file))
-lotus_docs = pickle.load(open(pickle_file, "rb"))
-
-
-fields = list(set().union(*(dict.keys() for dict in lotus_docs))) #create a unique set of all dict keys
-fields.sort()
-
-fields_dict = {}
-for field in fields:
-    max_val = []
-    for doc in lotus_docs:
-        if field in doc:
-            max_val.append(len(doc[field]))
-    fields_dict[field] = max(max_val)
-pp.pprint(fields_dict)
-
-attr_dict = dict(((field,Column(String(fields_dict[field])) ) for field in fields_dict)) #turn each key into a String(varchar) column
-pp.pprint(attr_dict)
-
-
-
-
-
-"""
-# create table
-tablename = 'Lotus_test_11'
-print('Creating table {}'.format(tablename))
-lotus_attr_dict = create_schema(tablename,lotus_docs)
-lotus_table,msg = create_table(lotus_attr_dict,sql_engine,drop=True)
-
-pp.pprint(lotus_attr_dict)
-
-# Dynamic insert using Dictionary unpacking
-print('Inserting rows')
-for doc in lotus_docs:
-    new_row_vals = lotus_table(**doc)
-    sql_session.add(new_row_vals) # Add to session
-    sql_session.commit() # Commit everything in session
-
-print('Export complete!')
-
-"""
 
 
 """

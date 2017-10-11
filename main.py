@@ -1,10 +1,11 @@
 import pprint as pp
 import sys
 import os
-from os import getenv
+from os import getenv, path
 import pickle
 import pymssql
 import MSSQL_connector as mssql
+import results_generator as results
 
 
 """
@@ -44,49 +45,44 @@ import MSSQL_connector as mssql
 #update_db = False # Use carefully
 
 
+
+# MSSQL details
 #SQL Server credentials
 SQL_SERVER = 'CA3BSF2-CASQL01'
 SQL_DB = 'AgProCanada_TableauDEV'
 SQL_USER = getenv("PYMSSQL_USERNAME") #Set this in Powershell using >>> $env:PYMSSQL_USERNAME = "THEKENNAGROUP\Jbarber"
 SQL_PASS = getenv("PYMSSQL_PASSWORD") #Set this in Powershell using >>> $env:PYMSSQL_PASSWORD = "Super_SecretPaword"
+SQL_PORT = 1433
+SQL_DRIVER = 'mssql+pymssql'
 
 
-#Tableau connector 
+#Connect to DB
+print('Connecting to SQL server')
+sql_conn,sql_session,sql_engine = results.connect(SQL_SERVER,SQL_DB,SQL_USER,SQL_PASS,port=1433,driver=SQL_DRIVER)
+ 
 
 # load pickle dict
-pickle_file = os.path.dirname(os.path.realpath(__file__))+'\pickle.p'
+pickle_file = path.dirname(path.realpath(__file__))+'\pickle.p'
+print('Loading Pickle file {} into list of dictionaries'.format(pickle_file))
 lotus_docs = pickle.load(open(pickle_file, "rb"))
 
-#Connect to sql server
-"SQL connector export"
-conn = mssql.connect(SQL_SERVER,SQL_DB,SQL_USER,SQL_PASS)
-mssql.create_lotus_table(conn)
 
-fields = ['FORM', 'DocCode', 'REPORTTYPE', 'SEASON', 'Published', 'ReportAccess',
-        'Workbook', 'Report', 'Width', 'Height', 'FileName',
-        'ReportName', 'ReportDescription', 'SearchKeywords', 'UpdatedBy']
+# create table
+tablename = 'Lotus_test_11'
+print('Creating table {}'.format(tablename))
+lotus_attr_dict = results.create_schema(tablename,lotus_docs)
+lotus_table,msg = results.create_table(lotus_attr_dict,sql_engine,drop=True)
 
+pp.pprint(lotus_attr_dict)
+
+# Dynamic insert using Dictionary unpacking
+print('Inserting {} rows'.format(len(lotus_docs)))
 for doc in lotus_docs:
-    keys = []
-    values = []
-    for k, v in doc.items():
-        if k in fields:
-            keys.append(k)
-            values.append(str(';'.join(v)))
-    conn.execute_non_query("""
-       IF OBJECT_ID('framework.Lotus_reports', 'U') IS NOT NULL 
-       INSERT INTO framework.Lotus_reports ({0})
-        VALUES ('{1}')
-    """.format(','.join(keys),"','".join(values)))
-    
+    new_row_vals = lotus_table(**doc)
+    sql_session.add(new_row_vals) # Add to session
+    sql_session.commit() # Commit everything in session
 
-#Bulk insert - one day
-Base = declarative_base()
-
-    records = df.to_dict(orient='records')
-    result = db_pool.execute(entity.__table__.insert(), records)
-
-"Results generator"
+print('Export complete!')
 "TBD Efficient data load"
 
 
