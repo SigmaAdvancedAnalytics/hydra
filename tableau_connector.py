@@ -14,7 +14,7 @@ def connect(host,dbname,user,password,port=5432,driver='postgresql+psycopg2'): #
     return conn,engine
 
 def list_tables(conn):
-    "return a tuple of all tables in database"
+    "return a tuple of all tables in PostgreSQL database"
     results = conn.execute("""
                 SELECT table_schema || '.' || table_name
                 FROM information_schema.tables
@@ -33,32 +33,7 @@ def exec_query():
     return True
     #the_frame = pd.read_sql_query("SELECT * FROM %s;" % name_of_table, engine)
 
-# Test main
-# Tableau repository details
-HOST = '10.101.191.13'
-DBNAME = 'workgroup'
-USER = 'readonly'
-PASSWORD = 'KennaG123'
-PORT = 8060
-#PG_DRIVER = 'postgresql+psycopg2'
 
-# Establish connection and return connection & cursor
-print("Connecting to database...")
-conn,engine = connect(HOST,DBNAME,USER,PASSWORD,port=PORT)
-print("Connected!")
-  
-# List tables
-print("Database tables:\n")
-results = list_tables(conn)
-pp.pprint(results)
-
-
-# Return tables
-target_tables = ['datasources','users','views','workbooks']
-schema = 'public'
-for tablename in target_tables:
-    table_df = get_table(tablename,conn,schema)
-    pp.pprint(table_df)
 
 
 

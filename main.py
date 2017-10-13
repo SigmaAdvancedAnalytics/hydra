@@ -48,17 +48,31 @@ import results_generator as results
 
 # MSSQL details
 #SQL Server credentials
-SQL_SERVER = 'CA3BSF2-CASQL01'
-SQL_DB = 'AgProCanada_TableauDEV'
-SQL_USER = getenv("PYMSSQL_USERNAME") #Set this in Powershell using >>> $env:PYMSSQL_USERNAME = "THEKENNAGROUP\Jbarber"
-SQL_PASS = getenv("PYMSSQL_PASSWORD") #Set this in Powershell using >>> $env:PYMSSQL_PASSWORD = "Super_SecretPaword"
-SQL_PORT = 1433
-SQL_DRIVER = 'mssql+pymssql'
+MSSQL_HOST = 'CA3BSF2-CASQL01'
+MSSQL_DB = 'AgProCanada_TableauDEV'
+MSSQL_USER = getenv("PYMSSQL_USERNAME") #Set this in Powershell using >>> $env:PYMSSQL_USERNAME = "THEKENNAGROUP\Jbarber"
+MSSQL_PASS = getenv("PYMSSQL_PASSWORD") #Set this in Powershell using >>> $env:PYMSSQL_PASSWORD = "Super_SecretPaword"
+MSSQL_PORT = 1433
+MSSQL_DRIVER = 'mssql+pymssql'
 
 
-#Connect to DB
+# Tableau repository details
+PG_HOST = '10.101.191.13'
+PG_DBNAME = 'workgroup'
+PG_USER = 'readonly'
+PG_PASS = 'KennaG123'
+PG_PORT = 8060
+PG_DRIVER = 'postgresql+psycopg2'
+
+
+#Connect to MSSQL
 print('Connecting to SQL server')
-sql_conn,sql_session,sql_engine = results.connect(SQL_SERVER,SQL_DB,SQL_USER,SQL_PASS,port=1433,driver=SQL_DRIVER)
+mssql_engine = results.connect(MSSQL_HOST,MSSQL_DB,MSSQL_USER,MSSQL_PASS,port=MSSQL_PORT,driver=MSSQL_DRIVER)
+
+
+#Connect to Postgres DB
+print('Connecting to PostgreSQL server')
+pg_engine = results.connect(PG_HOST,PG_DBNAME,PG_USER,PG_PASS,port=PG_PORT,driver=PG_DRIVER)
  
 
 # load pickle dict
@@ -67,24 +81,34 @@ print('Loading Pickle file {} into list of dictionaries'.format(pickle_file))
 lotus_docs = pickle.load(open(pickle_file, "rb"))
 
 
-# create table
-tablename = 'Lotus_test_11'
-print('Creating table {}'.format(tablename))
-lotus_attr_dict = results.create_schema(tablename,lotus_docs)
-lotus_table,msg = results.create_table(lotus_attr_dict,sql_engine,drop=True)
+# export lotus data
+tablename = 'lotus_config'
+lotus_results = results.export_to_db(tablename,mssql_engine,lotus_docs,drop=False)
+print(results)
 
-pp.pprint(lotus_attr_dict)
 
-# Dynamic insert using Dictionary unpacking
-print('Inserting {} rows'.format(len(lotus_docs)))
-for doc in lotus_docs:
-    new_row_vals = lotus_table(**doc)
-    sql_session.add(new_row_vals) # Add to session
-    sql_session.commit() # Commit everything in session
 
-print('Export complete!')
-"TBD Efficient data load"
+# Test main
 
+"""
+# Establish connection and return connection & cursor
+print("Connecting to database...")
+conn,engine = connect(HOST,DBNAME,USER,PASSWORD,port=PORT)
+print("Connected!")
+  
+# List tables
+print("Database tables:\n")
+results = list_tables(conn)
+pp.pprint(results)
+
+
+# Return tables
+target_tables = ['datasources','users','views','workbooks']
+schema = 'public'
+for tablename in target_tables:
+    table_df = get_table(tablename,conn,schema)
+    pp.pprint(table_df)
+"""
 
 """
 # Create Tableau workbooks datatable

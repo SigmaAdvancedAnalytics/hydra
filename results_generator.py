@@ -17,14 +17,14 @@ def dict_attributes(dict_list):
     return fields_dict
 
 
-def connect(host,dbname,user,password,port=1433,driver='mssql+pymssql'): #1433 is default MSSQL port
-    "Helper function for creating MSSQL db connection"
-    #'driver://user:password@hostname:port/database_name'
+def connect(host,dbname,user,password,port=1433,driver='mssql+pymssql'): #MSSQL driver and port by default
+    "Helper function for creating db connection"
+    # SQL Alchemy URI format'driver://user:password@hostname:port/database_name'
     engine = create_engine('{}://{}:{}@{}:{}/{}'.format(driver,user,password,host,port,dbname))
-    conn = engine.connect()
-    Session = sessionmaker(bind=engine)
-    session = Session() # I wonder if we can collapse these using a Lambda
-    return conn,session,engine
+    #conn = engine.connect()
+    #Session = sessionmaker(bind=engine)
+    #session = Session() # I wonder if we can collapse these using a Lambda
+    return engine
 
 def create_schema(tablename,dict_list): #TODO figure out how to sort columns - ordered dicts etc. seem to have no effect
     "Create sqlalchemy table from dictionary specified columns"
@@ -34,7 +34,7 @@ def create_schema(tablename,dict_list): #TODO figure out how to sort columns - o
     attr_dict['__tablename__'] = tablename #tablename assignment is done inside the dictionary
     return attr_dict
 
-def create_table(attr_dict,engine,drop=False): #TODO order the fields
+def create_table(engine,attr_dict,drop=False): #TODO order the fields
     "Create table from dictionary attributes"
     #Dark, dark SQLAlchemy metaclass magic - taken from http://sparrigan.github.io/sql/sqla/2016/01/03/dynamic-tables.html
     Base = declarative_base() #Required for 'declarative' use of the SQLAlchemy ORM
@@ -42,6 +42,25 @@ def create_table(attr_dict,engine,drop=False): #TODO order the fields
     if drop:
         Base.metadata.drop_all(engine) #Drop all tables in the scope of this metadata
     Base.metadata.create_all(engine) #Create all tables in the scope of this metadata
-    return GenericTableClass,'Table {} successfully created'.format(attr_dict['__tablename__'])
+    return GenericTableClass
+
+def insert_records(tableclass,engine,dict_list):
+    #generate a db session
+    Session = sessionmaker(bind=engine) #returns a session generator
+    session = Session()
+
+    # Export records: 1 dict = 1 row - allowing for unstructured documents to be uploaded
+    for dict in dict_list:
+        new_row_vals = tableclass(**dict)
+        session.add(new_row_vals)
+        session.commit()
+    return '{} rows inserted'.format(len(dict_list))
+
+def export_to_db(tablename,engine,dict_list,drop=False):
+    # create Lotus Config table
+    attr_dict = create_schema(tablename,dict_list)
+    tableclass = create_table(engine,attr_dict,drop=drop)
+    results = insert_records(tableclass,engine,dict_list)
+    return results
 
 
