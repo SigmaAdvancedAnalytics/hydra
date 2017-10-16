@@ -17,7 +17,7 @@ def dict_attributes(dict_list):
     return fields_dict
 
 
-def connect(host,dbname,user,password,port=1433,driver='mssql+pymssql'): #MSSQL driver and port by default
+def get_engine(host,dbname,user,password,port=1433,driver='mssql+pymssql'): #MSSQL driver and port by default
     "Helper function for creating db connection"
     # SQL Alchemy URI format'driver://user:password@hostname:port/database_name'
     engine = create_engine('{}://{}:{}@{}:{}/{}'.format(driver,user,password,host,port,dbname))
@@ -25,6 +25,17 @@ def connect(host,dbname,user,password,port=1433,driver='mssql+pymssql'): #MSSQL 
     #Session = sessionmaker(bind=engine)
     #session = Session() # I wonder if we can collapse these using a Lambda
     return engine
+
+def get_session(engine):
+    #generate a db session
+    Session = sessionmaker(bind=engine) #returns a session generator
+    session = Session()
+    return session
+
+def get_conn(engine):
+    #generate a db connection
+    conn = engine.connect()
+    return conn
 
 def create_schema(tablename,dict_list): #TODO figure out how to sort columns - ordered dicts etc. seem to have no effect
     "Create sqlalchemy table from dictionary specified columns"
@@ -62,5 +73,6 @@ def export_to_db(tablename,engine,dict_list,drop=False):
     tableclass = create_table(engine,attr_dict,drop=drop)
     results = insert_records(tableclass,engine,dict_list)
     return results
+
 
 

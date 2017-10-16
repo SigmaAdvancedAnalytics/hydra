@@ -1,11 +1,12 @@
-import pprint as pp
 import sys
 import os
 from os import getenv, path
-import pickle
-import pymssql
-import MSSQL_connector as mssql
+
+import tableau_connector as tab
 import results_generator as results
+
+import pickle
+import pprint as pp
 
 
 """
@@ -67,14 +68,14 @@ PG_DRIVER = 'postgresql+psycopg2'
 
 #Connect to MSSQL
 print('Connecting to SQL server')
-mssql_engine = results.connect(MSSQL_HOST,MSSQL_DB,MSSQL_USER,MSSQL_PASS,port=MSSQL_PORT,driver=MSSQL_DRIVER)
+mssql_engine = results.get_engine(MSSQL_HOST,MSSQL_DB,MSSQL_USER,MSSQL_PASS,port=MSSQL_PORT,driver=MSSQL_DRIVER)
 
 
 #Connect to Postgres DB
 print('Connecting to PostgreSQL server')
-pg_engine = results.connect(PG_HOST,PG_DBNAME,PG_USER,PG_PASS,port=PG_PORT,driver=PG_DRIVER)
+pg_engine = results.get_engine(PG_HOST,PG_DBNAME,PG_USER,PG_PASS,port=PG_PORT,driver=PG_DRIVER)
  
-
+"""
 # load pickle dict
 pickle_file = path.dirname(path.realpath(__file__))+'\pickle.p'
 print('Loading Pickle file {} into list of dictionaries'.format(pickle_file))
@@ -82,9 +83,26 @@ lotus_docs = pickle.load(open(pickle_file, "rb"))
 
 
 # export lotus data
+print('Exporting lotus config data')
 tablename = 'lotus_config'
 lotus_results = results.export_to_db(tablename,mssql_engine,lotus_docs,drop=False)
-print(results)
+print(lotus_results)
+"""
+
+#list tableau tables
+
+tab_tables = tab.get_tables(pg_engine)
+target_tables = ['workbooks','users','roles','projects','metrics_data','groups','datasources','datasource_fields']
+
+for tbl in tab_tables:
+    if tbl in target_tables:
+        data = pg_engine.execute(tab_tables[tbl].select()).fetchall()
+        if data:
+            tab_tables[tbl].create(mssql_engine)
+            mssql_engine.execute(tab_tables[tbl].insert(), data)
+            print('Exported '.format(tbl))
+ 
+
 
 
 

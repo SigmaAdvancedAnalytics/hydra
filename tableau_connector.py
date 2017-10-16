@@ -1,17 +1,11 @@
 #!/usr/bin/python
 import pandas as pd
-import sqlalchemy
+from collections import OrderedDict
+from sqlalchemy import *
+from sqlalchemy.ext.declarative import declarative_base
 import psycopg2
-import pprint as pp
  #https://onlinehelp.tableau.com/current/server/en-us/data_dictionary.html
 
-
-def connect(host,dbname,user,password,port=5432,driver='postgresql+psycopg2'): #5432 is default Postgres port
-    "helper function for creating postgres db connection"
-    #'postgresql+psycopg2://user:password@hostname/database_name'
-    engine = sqlalchemy.create_engine('{}://{}:{}@{}:{}/{}'.format(driver,user,password,host,port,dbname))
-    conn = engine.connect()
-    return conn,engine
 
 def list_tables(conn):
     "return a tuple of all tables in PostgreSQL database"
@@ -25,14 +19,17 @@ def list_tables(conn):
     results_list.sort()
     return results_list
 
-def get_table(tablename,engine,schema):
-    df = pd.read_sql_table(tablename, engine,schema)
-    return df
-
-def exec_query():
-    return True
-    #the_frame = pd.read_sql_query("SELECT * FROM %s;" % name_of_table, engine)
-
+def get_tables(engine):
+    tables = OrderedDict()
+    meta = MetaData()
+    meta.reflect(bind=engine)
+    tables_dict = meta.tables
+    for name,table in sorted(tables_dict.items()):
+        for column in table.columns:
+            if column.type == 'UUID':
+                tables[name][column].drop
+        tables[name] = table
+    return tables
 
 
 
