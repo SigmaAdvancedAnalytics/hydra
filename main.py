@@ -8,6 +8,9 @@ import results_generator as results
 import pickle
 import pprint as pp
 
+from sqlalchemy import *
+from migrate import *
+
 
 """
     Hydra is a rapid extraction tool for use in novel data infrastructure environments.
@@ -95,13 +98,24 @@ tab_tables = tab.get_tables(pg_engine)
 target_tables = ['workbooks','users','roles','projects','metrics_data','groups','datasources','datasource_fields']
 
 for tbl in tab_tables:
+    if tab_tables[tbl].exists('luid'):
+        clean_col = Column('luid', String(10))
+        print('trig')
+        tab_tables[tbl].append_column(clean_col)
+        print('trigg')
+        #tab_tables[tbl].append(clean_col)
+        tab_tables[tbl].c.replace(clean_col)
+        print('triggg')
+        
+        #.luid.drop() #TODO
+
     if tbl in target_tables:
         data = pg_engine.execute(tab_tables[tbl].select()).fetchall()
         if data:
             tab_tables[tbl].create(mssql_engine)
             mssql_engine.execute(tab_tables[tbl].insert(), data)
             print('Exported '.format(tbl))
- 
+
 
 
 
