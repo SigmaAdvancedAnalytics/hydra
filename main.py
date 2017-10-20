@@ -71,7 +71,6 @@ PG_DRIVER = 'postgresql+psycopg2'
 
 #Connect to MSSQL
 print('Connecting to SQL server')
-mssql_engine = results.get_engine(MSSQL_HOST,MSSQL_DB,MSSQL_USER,MSSQL_PASS,port=MSSQL_PORT,driver=MSSQL_DRIVER)
 
 
 #Connect to Postgres DB
@@ -98,7 +97,7 @@ tab_tables = tab.get_tables(pg_engine)
 target_tables = ['workbooks','users','roles','projects','metrics_data','groups','datasources','datasource_fields']
 
 for tbl in tab_tables:
-    if tab_tables[tbl].exists('luid'):
+    if tbl == 'datasources':
         clean_col = Column('luid', String(10))
         print('trig')
         tab_tables[tbl].append_column(clean_col)
@@ -109,13 +108,18 @@ for tbl in tab_tables:
         
         #.luid.drop() #TODO
 
-    if tbl in target_tables:
+    if tbl in target_tables and tbl == 'datasources':
         data = pg_engine.execute(tab_tables[tbl].select()).fetchall()
-        if data:
-            tab_tables[tbl].create(mssql_engine)
+        print('='*30,type(data))
+        for tuple in data:
+            print(str(tuple))
+        """if data:
+            mssql_engine = results.get_engine(MSSQL_HOST,MSSQL_DB,MSSQL_USER,MSSQL_PASS,port=MSSQL_PORT,driver=MSSQL_DRIVER)
+            tab_tables[tbl].create(bind=mssql_engine)
+            print('check')
             mssql_engine.execute(tab_tables[tbl].insert(), data)
             print('Exported '.format(tbl))
-
+"""
 
 
 
